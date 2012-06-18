@@ -140,6 +140,38 @@ vector <vector <int> > transformPerfs(vector <vector <int> > prefs){
     return result;
 }
 
+vector < vector < pair <int, double> > >
+calculateSimilarItems(vector <vector <int> > prefs,
+	int num = 10){
+    /* Create a dictionary of items showing which other items they
+       are most similar to */
+    vector < vector < pair <int, double> > > result(prefs[0].size());
+
+    /* Invert the preference matrix to be item-centric */
+    vector <vector <int> > itemPrefs = transformPerfs(prefs);
+    int cnt = 0;
+    for(int item = 0; item < itemPrefs.size(); item++){
+    	/* Status updates for large datasets */
+	cnt++;
+	if(cnt % 100 == 0) cout << cnt / itemPrefs.size() << "%" << endl;
+	/* Find the most similar items to this one */
+	vector < pair <int, double> > scores 
+	    = topMatches(itemPrefs, item, num, simDistance);
+	result[item] = scores;
+    }
+    return result;
+}
+
+#if 0
+void getRecommendedItems(vector <vector <int> > prefs,
+	vector < vector < pair <int, double > > > itemMatch, int user){
+    /* Loop over items rated by user */
+    for(int item = 0; item < 10; item++){
+
+    }
+}
+#endif
+
 int main(){
     vector <vector <int> > data(USER, vector <int>(ITEM, -1));
 
@@ -186,6 +218,17 @@ int main(){
     vector < pair <int, double> > rr = getRecommendations(result, 12, 15);
     for(int num = 0; num < rr.size(); num++)
 	cout << rr[num].first << " " << rr[num].second << endl; 
-    
+
+    // calculateSimilarItems
+    cout << "--- calculate SimilarItems ---" << endl;
+    vector < vector < pair <int, double> > > rrr
+	= calculateSimilarItems(data);
+    for(int num1 = 0; num1 < rrr.size(); num1++){
+	for(int num2 = 0; num2 < rrr[num1].size(); num2++)
+	    cout << rrr[num1][num2].first << " "
+		<< rrr[num1][num2].second << endl;
+	cout <<endl;
+    }
+
     return 0;
 }
