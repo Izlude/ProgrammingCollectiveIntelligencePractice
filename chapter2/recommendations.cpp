@@ -33,7 +33,7 @@ double simDistance(vector <vector <int> > prefs, int person1, int person2){
     /* Add up the squares of all the differences */
     long sum_of_squares = 0;
     for(int item = 0; item < prefs[0].size(); item++) if(si[item]){
-    	sum_of_squares += pow(prefs[person1][item] - prefs[person2][item], 2);
+	sum_of_squares += pow(prefs[person1][item] - prefs[person2][item], 2);
     }
 
     return 1.0 / (1.0 + sum_of_squares);
@@ -59,7 +59,7 @@ double simPearson(vector <vector <int> > prefs, int person1, int person2){
     double num, den;
     /* Add up all the preferences, Sum up the squares, Sum up the products */
     for(int item = 0; item < prefs[0].size(); item++) if(si[item]){
-    	sum1 += prefs[person1][item];
+	sum1 += prefs[person1][item];
 	sum2 += prefs[person2][item];
 	sum1Sq += pow(prefs[person1][item], 2);
 	sum2Sq += pow(prefs[person2][item], 2);
@@ -76,12 +76,12 @@ double simPearson(vector <vector <int> > prefs, int person1, int person2){
 vector < pair <int, double> > topMatches(vector <vector <int> > prefs, 
 	int person, int num = 5, 
 	double (*similarity)(vector <vector <int> > p, int p1, int p2) = simPearson){
-    
+
     /* Returns the best matches for person from the prefs dictionary.
        Number of results ans similaryty function are optional params. */
     vector < pair <int, double> > scores(prefs.size());
     for(int other = 0; other < prefs.size(); other++) if(person != other){
-    	scores[other] = make_pair(other, similarity(prefs, person, other));
+	scores[other] = make_pair(other, similarity(prefs, person, other));
     }
 
     /* Sort the list so the highest scores appear at the top */
@@ -101,7 +101,7 @@ vector < pair <int, double> > getRecommendations(vector <vector <int > > prefs,
 
     memset(totals, 0, sizeof(totals));
     memset(simSums, 0, sizeof(simSums));
-    
+
     for(int other = 0; other < prefs.size(); other++){
 	/* don't compare myself */
 	if(person == other) continue;
@@ -112,7 +112,7 @@ vector < pair <int, double> > getRecommendations(vector <vector <int > > prefs,
 	for(int item = 0; item < prefs[0].size(); item++){
 	    /* only score movies I haven't seen yes */
 	    if(prefs[person][item] <= 0 && prefs[other][item] > 0){
-	    	/* Similarity * Score */
+		/* Similarity * Score */
 		totals[item] += prefs[other][item] * sim;
 		/* Sum of similarities */
 		simSums[item] += sim;
@@ -132,11 +132,11 @@ vector < pair <int, double> > getRecommendations(vector <vector <int > > prefs,
 
 vector <vector <int> > transformPerfs(vector <vector <int> > prefs){
     vector <vector <int> > result(prefs[0].size(), vector <int>(prefs.size()));
-    
+
     for(int person = 0; person < prefs.size(); person++)
 	for(int item = 0; item < prefs[0].size(); item++)
 	    result[item][person] = prefs[person][item];
-    
+
     return result;
 }
 
@@ -151,7 +151,7 @@ calculateSimilarItems(vector <vector <int> > prefs,
     vector <vector <int> > itemPrefs = transformPerfs(prefs);
     int cnt = 0;
     for(int item = 0; item < itemPrefs.size(); item++){
-    	/* Status updates for large datasets */
+	/* Status updates for large datasets */
 	cnt++;
 	if(cnt % 100 == 0) cout << cnt / itemPrefs.size() << "%" << endl;
 	/* Find the most similar items to this one */
@@ -162,15 +162,39 @@ calculateSimilarItems(vector <vector <int> > prefs,
     return result;
 }
 
-#if 0
-void getRecommendedItems(vector <vector <int> > prefs,
+vector < pair <int, double> >
+getRecommendedItems(vector <vector <int> > prefs,
 	vector < vector < pair <int, double > > > itemMatch, int user){
-    /* Loop over items rated by user */
-    for(int item = 0; item < 10; item++){
+    vector <int> userRatings = prefs[user];
+    double scores[userRatings.size()];
+    double totalSim[userRatings.size()];
 
+    memset(scores, 0, sizeof(scores));
+    memset(totalSim, 0, sizeof(totalSim));
+
+    /* Loop over items rated by user */
+    for(int item = 0; item < userRatings.size(); item++){
+	/* Loop over items similar to this one */
+	for(int item2 = 0; item2 < itemMatch[item].size(); item2++){
+	    /* Ignore if this user has already rated this item */
+	    if(userRatings[item2] >= 0) continue;
+
+	    /* Weighted sum of rating times similarity */
+	    scores[item2] += itemMatch[item][item2].second * userRatings[item];
+
+	    /* Sum of all the similarities */
+	    totalSim[item2] += itemMatch[item][item2].second;
+	}
     }
+    /* Divide each total score by total weighting to get an average */
+    vector < pair <int, double> > rankings;
+    for(int item = 0; item < userRatings.size(); item++)
+	rankings[item] = make_pair(item, scores[item] / totalSim[item]);
+
+    /* Return the rankings from highest to lowest */
+    sort(rankings.begin(), rankings.end(), original_sort);
+    return rankings;
 }
-#endif
 
 int main(){
     vector <vector <int> > data(USER, vector <int>(ITEM, -1));
@@ -178,7 +202,7 @@ int main(){
     // set data
     ifstream ifs(DATA_FILE);
     string buf;
-    
+
     while(ifs && getline(ifs, buf)) {
 	int user_id, item_id, rating;
 	long timestamp;
@@ -198,7 +222,7 @@ int main(){
     vector < pair <int, double> > s = topMatches(data, 12, 15);
     for(int num = 0; num < s.size(); num++)
 	cout << s[num].first << " " << s[num].second << endl; 
-    
+
     // getRecommendations
     cout << "--- get Recommendations ---" << endl;
     vector < pair <int, double> > r = getRecommendations(data, 12, 15);
